@@ -28,17 +28,34 @@ export function makeStage(canvas, { alpha = true, preserve = false } = {}) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
   renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // soft penumbra
 
   const scene = new THREE.Scene();
   scene.environment = studioEnvironment(renderer);
-  scene.environmentIntensity = 0.85;
+  scene.environmentIntensity = 0.62;
 
-  const key = new THREE.DirectionalLight(0xffd6a0, 2.6); key.position.set(3, 6, 4); scene.add(key);
+  const key = new THREE.DirectionalLight(0xffd6a0, 3.8); key.position.set(4.5, 5, 1.2); scene.add(key); scene.add(key.target);
+  key.castShadow = true;
+  key.shadow.mapSize.set(innerWidth < 760 ? 1024 : 2048, innerWidth < 760 ? 1024 : 2048);
+  key.shadow.bias = -0.0003;
   const rim = new THREE.DirectionalLight(0xff7a2e, 2.6); rim.position.set(-5, 2.5, -4); scene.add(rim);
   const rim2 = new THREE.DirectionalLight(0xffb36b, 1.2); rim2.position.set(5, 1, -3); scene.add(rim2);
   scene.add(new THREE.HemisphereLight(0xfff1dc, 0x1a0c05, 0.25));
 
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
   camera.position.set(0, 2.6, 8.2); camera.lookAt(0, 0, 0);
-  return { renderer, scene, camera };
+  // aim the key light's shadow frustum tightly around one object
+  const KEY_DIR = new THREE.Vector3(4.5, 5, 1.2).normalize();
+  function fitShadow(obj, radius) {
+    if (!obj) return; // keep shadows enabled: toggling would force a shader recompile (a visible hitch)
+    const r = radius * 1.25;
+    key.target.position.copy(obj.position);
+    key.position.copy(obj.position).addScaledVector(KEY_DIR, r * 4);
+    const c = key.shadow.camera;
+    c.left = -r; c.right = r; c.top = r; c.bottom = -r; c.near = r * 1.5; c.far = r * 7;
+    c.updateProjectionMatrix();
+    key.shadow.normalBias = r * 0.006;
+  }
+  return { renderer, scene, camera, key, fitShadow };
 }

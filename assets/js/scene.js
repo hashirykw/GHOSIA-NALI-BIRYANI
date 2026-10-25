@@ -12,7 +12,7 @@ const next = (f) => (QA ? setTimeout(f, 1500) : requestAnimationFrame(f));
 const idle = (f) => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: 400 }) : setTimeout(f, 60));
 setQuality({ rice: small ? 0.62 : 1 });
 
-const { renderer, scene, camera } = makeStage(canvas);
+const { renderer, scene, camera, fitShadow } = makeStage(canvas);
 const DIST = camera.position.length();
 const RADIUS = 1.75;
 
@@ -161,6 +161,7 @@ function frame() {
   if (wasIdle) { wasIdle = false; canvas.style.opacity = '1'; }
 
   // hero dishes: outgoing lifts away, incoming rises from below and settles
+  let shadowObj = null, shadowR = 0, best = 0;
   for (let i = 0; i < N; i++) {
     const k = p - i, a = Math.min(1, Math.abs(k)), s = 1 - ease(a);
     const need = heroOn && s > 0.002;
@@ -173,6 +174,7 @@ function frame() {
       d.position.x += k * -0.35 * sc;
       d.rotation.set(0.12 + smy * 0.22 + k * 0.35, baseRot[i] + k * 1.9 + t * 0.1 + smx * 0.45, smx * -0.05 + k * 0.08);
       tickOrbiters(d, t, dt);
+      if (s > best) { best = s; shadowObj = d; shadowR = RADIUS * d.scale.x; }
     }
     d.userData.steam.forEach((o, j) => { steams[i][j].update(dt, d.localToWorld(tmpV.copy(o)), d.scale.x, need ? s : 0, t); });
   }
@@ -184,6 +186,7 @@ function frame() {
     place(sp, sa, 0.85 * (0.6 + 0.4 * spIn));
     sp.rotation.set(smy * 0.2, t * 0.07 + smx * 0.55, 0);
     tickOrbiters(sp, t, dt);
+    if (!shadowObj) { shadowObj = sp; shadowR = RADIUS * 1.4 * sp.scale.x; }
   } else if (spices) spices.visible = false;
 
   // degh
@@ -193,6 +196,7 @@ function frame() {
     place(pt, da, 0.95 * (0.7 + 0.3 * dgIn));
     pt.position.y += Math.sin(t * 0.8) * 0.02 * pt.scale.x;
     pt.rotation.set(0.1 + smy * 0.15, -0.4 + t * 0.12 + smx * 0.4, 0);
+    if (!shadowObj) { shadowObj = pt; shadowR = RADIUS * pt.scale.x; }
   } else if (pot) pot.visible = false;
   if (pot) pot.userData.steam.forEach((o, j) => potSteam[j].update(dt, pot.localToWorld(tmpV.copy(o)), pot.scale.x, pot.visible ? dgIn : 0, t));
 
@@ -202,6 +206,7 @@ function frame() {
   pos.needsUpdate = true;
   embers.visible = heroOn || dgOn;
 
+  fitShadow(shadowObj, shadowR);
   renderer.render(scene, camera);
   adapt(dt * 1000);
   next(frame);

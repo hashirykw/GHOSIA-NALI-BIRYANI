@@ -278,7 +278,11 @@ function onTop(o, surf, R, r, lift = .02) {
   o.rotation.set(r() * 3, r() * 3, r() * 3);
 }
 function scatter(group, n, make, place, r) { for (let i = 0; i < n; i++) { const o = make(r, i); place(o, r, i); group.add(o); } }
-function wrap(g, steam, y) { g.position.y = y; const w = new THREE.Group(); w.add(g); w.userData.steam = steam; w.userData.orbiters = g.userData.orbiters; return w; }
+function shadows(root) {
+  const orb = new Set(); (root.userData.orbiters || []).forEach((o) => o.traverse((c) => orb.add(c)));
+  root.traverse((o) => { if (o.isMesh) { const f = !orb.has(o); o.castShadow = f; o.receiveShadow = f; } });
+}
+function wrap(g, steam, y) { g.position.y = y; shadows(g); const w = new THREE.Group(); w.add(g); w.userData.steam = steam; w.userData.orbiters = g.userData.orbiters; return w; }
 
 /* ---------- palettes ---------- */
 const BIRYANI_Z = {
@@ -404,6 +408,7 @@ export function spiceCloud() {
     o.rotation.set(r() * 6, r() * 6, r() * 6); g.add(o); list.push(o);
   });
   g.userData.orbiters = list; g.userData.steam = [];
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return g;
 }
 
