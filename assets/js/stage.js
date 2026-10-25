@@ -22,7 +22,7 @@ function studioEnvironment(renderer) {
   return tex;
 }
 
-export function makeStage(canvas, { alpha = true, preserve = false } = {}) {
+export function makeStage(canvas, { alpha = true, preserve = false, shadowSize = 1024 } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha, preserveDrawingBuffer: preserve, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -37,7 +37,7 @@ export function makeStage(canvas, { alpha = true, preserve = false } = {}) {
 
   const key = new THREE.DirectionalLight(0xffd6a0, 3.8); key.position.set(4.5, 5, 1.2); scene.add(key); scene.add(key.target);
   key.castShadow = true;
-  key.shadow.mapSize.set(innerWidth < 760 ? 1024 : 2048, innerWidth < 760 ? 1024 : 2048);
+  key.shadow.mapSize.set(shadowSize, shadowSize);
   key.shadow.bias = -0.0003;
   const rim = new THREE.DirectionalLight(0xff7a2e, 2.6); rim.position.set(-5, 2.5, -4); scene.add(rim);
   const rim2 = new THREE.DirectionalLight(0xffb36b, 1.2); rim2.position.set(5, 1, -3); scene.add(rim2);

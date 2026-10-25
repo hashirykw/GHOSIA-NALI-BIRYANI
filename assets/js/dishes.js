@@ -1,6 +1,7 @@
 // Ghousia Nalli Biryani — procedural, physically-based 3D dishes (Three.js)
 import * as THREE from 'three';
 import * as TX from './textures.js';
+import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 
 /* ---------- utilities ---------- */
 export function rng(seed) {
@@ -38,37 +39,46 @@ function aoFromDisp(geo, amp, lo = 0.45) {
 }
 function lathe(pts, seg = 96) { return new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), seg); }
 const UP = new THREE.Vector3(0, 1, 0);
-let Q = { rice: 1 }; // quality scale set by caller
-export function setQuality(q) { Q = { ...Q, ...q }; }
+let Q = { rice: 1, tier: 'high' }; // set by the caller before anything is built
+export function setQuality(q) { Q = { ...Q, ...q }; TX.setTexScale(Q.tier === 'low' ? 0.5 : 1); }
+const hi = () => Q.tier === 'high';
+const SEG = (n) => Math.max(24, Math.round(n * (hi() ? 0.6 : 0.4)));   // lathe / torus resolution
+const PHYS_ONLY = ['clearcoat', 'clearcoatRoughness', 'sheen', 'sheenColor', 'sheenRoughness', 'anisotropy', 'transmission', 'ior'];
+// Physical on capable GPUs, Standard (much cheaper per pixel) on phones
+function PM(params) {
+  if (hi()) return new THREE.MeshPhysicalMaterial(params);
+  const p = { ...params }; PHYS_ONLY.forEach((k) => delete p[k]);
+  return new THREE.MeshStandardMaterial(p);
+}
 
 /* ---------- materials (shared) ---------- */
 const M = {};
 const once = (k, f) => M[k] || (M[k] = f());
 const mat = {
-  steel: () => once('steel', () => { const t = TX.steel(); return new THREE.MeshPhysicalMaterial({ color: 0xdde0e4, metalness: 1, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.35, 0.35), anisotropy: 0.65, clearcoat: 0.15, clearcoatRoughness: 0.2 }); }),
-  copper: () => once('copper', () => { const t = TX.copper(); return new THREE.MeshPhysicalMaterial({ map: t.map, metalness: 1, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.9, 0.9), clearcoat: 0.3, clearcoatRoughness: 0.3 }); }),
-  brass: () => once('brass', () => { const t = TX.brass(); return new THREE.MeshPhysicalMaterial({ map: t.map, metalness: 1, roughness: 0.85, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.6, 0.6), clearcoat: 0.3, clearcoatRoughness: 0.25 }); }),
+  steel: () => once('steel', () => { const t = TX.steel(); return PM({ color: 0xdde0e4, metalness: 1, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.35, 0.35), clearcoat: 0.15, clearcoatRoughness: 0.2 }); }),
+  copper: () => once('copper', () => { const t = TX.copper(); return PM({ map: t.map, metalness: 1, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.9, 0.9), clearcoat: 0.3, clearcoatRoughness: 0.3 }); }),
+  brass: () => once('brass', () => { const t = TX.brass(); return PM({ map: t.map, metalness: 1, roughness: 0.85, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.6, 0.6), clearcoat: 0.3, clearcoatRoughness: 0.25 }); }),
   darkBrass: () => once('dbrass', () => new THREE.MeshStandardMaterial({ color: 0x7a4e22, metalness: 1, roughness: 0.38 })),
   clay: () => once('clay', () => { const t = TX.clay(); return new THREE.MeshStandardMaterial({ map: t.map, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.45, 0.45) }); }),
   dough: () => once('dough', () => { const t = TX.dough(); return new THREE.MeshStandardMaterial({ map: t.map, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(1.4, 1.4) }); }),
-  meat: () => once('meat', () => { const t = TX.meat(); for (const k of ['map', 'normal', 'rough']) t[k].repeat.set(3, 2); return new THREE.MeshPhysicalMaterial({ map: t.map, vertexColors: true, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.9, 0.9), clearcoat: 0.75, clearcoatRoughness: 0.28, sheen: 0.25, sheenColor: new THREE.Color(0xff9a60), sheenRoughness: 0.5 }); }),
+  meat: () => once('meat', () => { const t = TX.meat(); for (const k of ['map', 'normal', 'rough']) t[k].repeat.set(3, 2); return PM({ map: t.map, vertexColors: true, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.9, 0.9), clearcoat: 0.75, clearcoatRoughness: 0.28, sheen: 0.25, sheenColor: new THREE.Color(0xff9a60), sheenRoughness: 0.5 }); }),
   bone: () => once('bone', () => { const t = TX.bone(); return new THREE.MeshStandardMaterial({ map: t.map, roughness: 1, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(1.1, 1.1) }); }),
   boneEnd: () => once('boneEnd', () => { const t = TX.bone(); return new THREE.MeshStandardMaterial({ map: t.map, color: 0xd8c39a, roughness: 0.55, normalMap: t.normal }); }),
-  marrow: () => once('marrow', () => { const t = TX.marrow(); return new THREE.MeshPhysicalMaterial({ map: t.map, normalMap: t.normal, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08, sheen: 0.6, sheenColor: new THREE.Color(0xffb08a) }); }),
-  rice: () => once('rice', () => new THREE.MeshPhysicalMaterial({ roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.35, sheen: 0.5, sheenRoughness: 0.4, sheenColor: new THREE.Color(0xfff7e8) })),
-  glossRice: () => once('grice', () => new THREE.MeshPhysicalMaterial({ roughness: 0.3, clearcoat: 0.8, clearcoatRoughness: 0.15, sheen: 0.3, sheenColor: new THREE.Color(0xffe2a0) })),
+  marrow: () => once('marrow', () => { const t = TX.marrow(); return PM({ map: t.map, normalMap: t.normal, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08, sheen: 0.6, sheenColor: new THREE.Color(0xffb08a) }); }),
+  rice: () => once('rice', () => new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0 })),
+  glossRice: () => once('grice', () => PM({ roughness: 0.3, clearcoat: 0.8, clearcoatRoughness: 0.15 })),
   leaf: (kind) => once('leaf' + kind, () => { const t = TX.leaf(kind); return new THREE.MeshStandardMaterial({ map: t.map, normalMap: t.normal, alphaTest: 0.5, side: THREE.DoubleSide, roughness: kind === 'mint' ? 0.45 : 0.62 }); }),
-  organic: (kind, color, rough = 1, extra = {}) => once('o' + kind + color, () => { const t = TX.organic(kind); return new THREE.MeshPhysicalMaterial({ color, roughness: rough, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.55, 0.55), ...extra }); }),
+  organic: (kind, color, rough = 1, extra = {}) => once('o' + kind + color, () => { const t = TX.organic(kind); return PM({ color, roughness: rough, roughnessMap: t.rough, normalMap: t.normal, normalScale: new THREE.Vector2(0.55, 0.55), ...extra }); }),
   plain: (c, r = 0.6, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...extra }),
-  gloss: (c, r = 0.3, extra = {}) => new THREE.MeshPhysicalMaterial({ color: c, roughness: r, clearcoat: 0.9, clearcoatRoughness: 0.15, ...extra }),
+  gloss: (c, r = 0.3, extra = {}) => PM({ color: c, roughness: r, clearcoat: 0.9, clearcoatRoughness: 0.15, ...extra }),
 };
 
 /* ---------- vessels ---------- */
 function thali() {
   const g = new THREE.Group();
   const pts = [[0, .02], [1.22, .02], [1.34, .05], [1.52, .17], [1.64, .21], [1.68, .2], [1.66, .185], [1.55, .145], [1.3, .005], [1.2, -.015], [0, -.015]];
-  g.add(new THREE.Mesh(lathe(pts, 160), mat.steel()));
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.665, .024, 16, 200), mat.steel()); rim.rotation.x = Math.PI / 2; rim.position.y = .2; g.add(rim);
+  g.add(new THREE.Mesh(lathe(pts, SEG(160)), mat.steel()));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.665, .024, 16, SEG(200)), mat.steel()); rim.rotation.x = Math.PI / 2; rim.position.y = .2; g.add(rim);
   return g;
 }
 function bowl({ r = 1, depth = .7, base = .45, wall = .05, m, lip = true, belly = .1 }) {
@@ -76,8 +86,8 @@ function bowl({ r = 1, depth = .7, base = .45, wall = .05, m, lip = true, belly 
   for (let i = 0; i <= N; i++) { const t = i / N; out.push([base + (r - base) * Math.sin(t * Math.PI / 2) + Math.sin(t * Math.PI) * belly, t * depth]); }
   for (let i = N; i >= 0; i--) { const t = i / N; inn.push([Math.max(0, base - wall + (r - base) * Math.sin(t * Math.PI / 2) + Math.sin(t * Math.PI) * belly - wall * .2), t * depth + wall * (1 - t) + .001]); }
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(lathe([[0, 0], ...out, ...inn, [0, wall]], 160), m));
-  if (lip) { const t = new THREE.Mesh(new THREE.TorusGeometry(r - wall / 2 + belly * 0, wall * .62, 16, 200), m); t.rotation.x = Math.PI / 2; t.position.y = depth; g.add(t); }
+  g.add(new THREE.Mesh(lathe([[0, 0], ...out, ...inn, [0, wall]], SEG(160)), m));
+  if (lip) { const t = new THREE.Mesh(new THREE.TorusGeometry(r - wall / 2 + belly * 0, wall * .62, 16, SEG(200)), m); t.rotation.x = Math.PI / 2; t.position.y = depth; g.add(t); }
   g.userData.innerAt = (y) => { const t = Math.min(1, Math.max(0, y / depth)); return base - wall + (r - base) * Math.sin(t * Math.PI / 2) + Math.sin(t * Math.PI) * belly - wall * 1.1; };
   return g;
 }
@@ -87,7 +97,7 @@ function pickColor(palette, r) { let x = r(), acc = 0; for (const [c, w] of pale
 let grainGeo;
 function basmati() {
   if (grainGeo) return grainGeo;
-  const g = new THREE.CapsuleGeometry(0.0175, 0.085, 3, 8);
+  const g = hi() ? new THREE.CapsuleGeometry(0.0175, 0.085, 2, 6) : new THREE.CapsuleGeometry(0.0175, 0.085, 1, 5);
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setX(i, p.getX(i) + y * y * 0.9); p.setZ(i, p.getZ(i) * 0.86); } // slight curve, flattened
   g.computeVertexNormals();
@@ -130,7 +140,7 @@ function riceMound({ R = 1.2, H = .7, count = 4200, palette, zones, seed = 1, ma
   return g;
 }
 function meatChunk(r, size = .2) {
-  const geo = new THREE.SphereGeometry(size, 56, 40);
+  const geo = hi() ? new THREE.SphereGeometry(size, 40, 28) : new THREE.SphereGeometry(size, 28, 20);
   displace(geo, size * .42, 1.15 / size, r() * 10);
   const d1 = geo.userData.disp.slice();
   displace(geo, size * .1, 4.2 / size, r() * 10);
@@ -198,13 +208,13 @@ function lemonWedge() {
   const g = new THREE.Group(), R = .2;
   const rind = new THREE.Mesh(new THREE.SphereGeometry(R, 40, 20, 0, Math.PI / 2.4, 0, Math.PI), mat.organic('rind', 0xf0c22a, .55, { clearcoat: .4 }));
   rind.scale.set(1, 1.25, 1); g.add(rind);
-  const fl = once('lemonFlesh', () => new THREE.MeshPhysicalMaterial({ map: TX.citrus(), roughness: .2, clearcoat: 1, clearcoatRoughness: .05, side: THREE.DoubleSide }));
+  const fl = once('lemonFlesh', () => PM({ map: TX.citrus(), roughness: .2, clearcoat: 1, clearcoatRoughness: .05, side: THREE.DoubleSide }));
   const f1 = new THREE.Mesh(new THREE.CircleGeometry(R * .985, 32, -Math.PI / 2, Math.PI), fl); f1.scale.set(1, 1.25, 1); g.add(f1);
   const f2 = f1.clone(); f2.rotation.y = Math.PI / 2.4; g.add(f2);
   return g;
 }
 function slice(tex, side, R, h = .025) {
-  const top = new THREE.MeshPhysicalMaterial({ map: tex, roughness: .25, clearcoat: .9, clearcoatRoughness: .08 });
+  const top = PM({ map: tex, roughness: .25, clearcoat: .9, clearcoatRoughness: .08 });
   return new THREE.Mesh(new THREE.CylinderGeometry(R, R, h, 48), [mat.gloss(side, .35), top, top]);
 }
 function almond(r) { const m = new THREE.Mesh(displace(new THREE.SphereGeometry(.05, 24, 14), .003, 40, r() * 9), mat.organic('anise', 0xb77b45, .7)); m.scale.set(1, .42, 1.8); return m; }
@@ -278,11 +288,65 @@ function onTop(o, surf, R, r, lift = .02) {
   o.rotation.set(r() * 3, r() * 3, r() * 3);
 }
 function scatter(group, n, make, place, r) { for (let i = 0; i < n; i++) { const o = make(r, i); place(o, r, i); group.add(o); } }
-function shadows(root) {
-  const orb = new Set(); (root.userData.orbiters || []).forEach((o) => o.traverse((c) => orb.add(c)));
-  root.traverse((o) => { if (o.isMesh) { const f = !orb.has(o); o.castShadow = f; o.receiveShadow = f; } });
+/* ---------- batching: merge static meshes that share a look into one draw call ---------- */
+const KEEP = ['position', 'normal', 'uv', 'color'];
+const sig = (m) => [m.type, m.roughness, m.metalness, m.clearcoat || 0, m.clearcoatRoughness || 0, m.sheen || 0, m.transparent, m.opacity, m.side, m.alphaTest].join('|');
+export function bake(root, skip = new Set()) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const groups = new Map();
+  root.traverse((o) => {
+    if (!o.isMesh || o.isInstancedMesh || skip.has(o) || Array.isArray(o.material)) return;
+    const m = o.material, textured = !!(m.map || m.normalMap || m.roughnessMap || m.vertexColors);
+    const key = textured ? 'u' + m.uuid : 's' + sig(m);
+    let g = groups.get(key); if (!g) groups.set(key, (g = { mat: m, textured, items: [] }));
+    g.items.push(o);
+  });
+  const rel = new THREE.Matrix4();
+  for (const g of groups.values()) {
+    if (g.items.length < 2) continue;
+    const geos = g.items.map((o) => {
+      let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+      for (const k of Object.keys(geo.attributes)) if (!KEEP.includes(k)) geo.deleteAttribute(k);
+      const n = geo.attributes.position.count;
+      if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2));
+      geo.applyMatrix4(rel.multiplyMatrices(inv, o.matrixWorld));
+      if (!g.textured) {
+        const c = o.material.color, a = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
+        geo.setAttribute('color', new THREE.BufferAttribute(a, 3));
+      } else if (!g.mat.vertexColors && geo.attributes.color) geo.deleteAttribute('color');
+      return geo;
+    });
+    const merged = mergeGeometries(geos, false); if (!merged) continue;
+    let material = g.mat;
+    if (!g.textured) { material = g.mat.clone(); material.color.set(0xffffff); material.vertexColors = true; }
+    const mesh = new THREE.Mesh(merged, material);
+    root.add(mesh);
+    g.items.forEach((o) => o.parent && o.parent.remove(o));
+  }
+  // drop now-empty groups
+  const empties = []; root.traverse((o) => { if (o !== root && o.isGroup && o.children.length === 0) empties.push(o); });
+  empties.forEach((o) => o.parent && o.parent.remove(o));
+  return root;
 }
-function wrap(g, steam, y) { g.position.y = y; shadows(g); const w = new THREE.Group(); w.add(g); w.userData.steam = steam; w.userData.orbiters = g.userData.orbiters; return w; }
+function shadows(root, orb) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const floating = orb.has(o);
+    o.receiveShadow = !floating;
+    o.castShadow = !floating && !o.isInstancedMesh; // rice only receives: halves the shadow-pass cost
+  });
+}
+function wrap(g, steam, y) {
+  g.position.y = y;
+  const orbs = g.userData.orbiters || [];
+  orbs.forEach((o) => { if (o.children && o.children.length > 1) bake(o); });   // each floating garnish → 1-2 draws
+  const orb = new Set(); orbs.forEach((o) => o.traverse((c) => orb.add(c)));
+  bake(g, orb);
+  shadows(g, orb);
+  const w = new THREE.Group(); w.add(g); w.userData.steam = steam; w.userData.orbiters = g.userData.orbiters; return w;
+}
 
 /* ---------- palettes ---------- */
 const BIRYANI_Z = {
@@ -315,7 +379,7 @@ export function biryaniPlate({ orbit = true } = {}) {
 export function pulaoHandi({ orbit = true } = {}) {
   const g = new THREE.Group(), r = rng(31);
   g.add(bowl({ r: 1.45, depth: .55, base: 1.0, wall: .06, m: mat.copper(), belly: .12 }));
-  const band = new THREE.Mesh(new THREE.TorusGeometry(1.52, .025, 12, 200), mat.darkBrass()); band.rotation.x = Math.PI / 2; band.position.y = .28; g.add(band);
+  const band = new THREE.Mesh(new THREE.TorusGeometry(1.52, .025, 12, SEG(200)), mat.darkBrass()); band.rotation.x = Math.PI / 2; band.position.y = .28; g.add(band);
   for (const s of [-1, 1]) { const h = new THREE.Mesh(new THREE.TorusGeometry(.17, .032, 12, 40, Math.PI), mat.brass()); h.position.set(s * 1.52, .5, 0); h.rotation.set(0, s > 0 ? Math.PI / 2 : -Math.PI / 2, Math.PI); g.add(h); }
   const rice = riceMound({ R: 1.3, H: .55, count: 4200, zones: PULAO_Z, seed: 4, baseColor: 0xc9a46c }); rice.position.y = .36; g.add(rice);
   const surf = (x) => rice.userData.surface(x) + .38;
@@ -350,11 +414,11 @@ export function kheerBowl({ orbit = true } = {}) {
   const g = new THREE.Group(), r = rng(61);
   const b = bowl({ r: 1.15, depth: .75, base: .55, wall: .07, m: mat.clay(), belly: .12 }); g.add(b);
   const lvl = .6, sr = b.userData.innerAt(lvl) + .02;
-  const sg = new THREE.CircleGeometry(sr, 128); sg.rotateX(-Math.PI / 2);
+  const sg = new THREE.CircleGeometry(sr, SEG(128)); sg.rotateX(-Math.PI / 2);
   const p = sg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, Math.sin(x * 5) * Math.cos(z * 4) * .012); }
   sg.computeVertexNormals();
   const t = TX.kheer();
-  const surface = new THREE.Mesh(sg, new THREE.MeshPhysicalMaterial({ map: t.map, normalMap: t.normal, normalScale: new THREE.Vector2(.8, .8), roughness: .34, clearcoat: .45, clearcoatRoughness: .3, sheen: .9, sheenColor: new THREE.Color(0xfff6e0), sheenRoughness: .35 }));
+  const surface = new THREE.Mesh(sg, PM({ map: t.map, normalMap: t.normal, normalScale: new THREE.Vector2(.8, .8), roughness: .34, clearcoat: .45, clearcoatRoughness: .3, sheen: .9, sheenColor: new THREE.Color(0xfff6e0), sheenRoughness: .35 }));
   surface.position.y = lvl; g.add(surface);
   // soft rice grains just breaking the surface
   const grains = new THREE.InstancedMesh(basmati(), mat.plain(0xf6ecd4, .5), 160), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
@@ -372,11 +436,11 @@ export function raitaSalad({ orbit = true } = {}) {
   const g = new THREE.Group(), r = rng(71);
   const b = bowl({ r: 1.05, depth: .62, base: .5, wall: .045, m: mat.steel(), belly: .06 }); g.add(b);
   const lvl = .5, sr = b.userData.innerAt(lvl) + .02;
-  const sg = new THREE.CircleGeometry(sr, 128); sg.rotateX(-Math.PI / 2);
+  const sg = new THREE.CircleGeometry(sr, SEG(128)); sg.rotateX(-Math.PI / 2);
   const p = sg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, Math.sin(x * 6 + z * 3) * .01); }
   sg.computeVertexNormals();
   const t = TX.raita();
-  const s = new THREE.Mesh(sg, new THREE.MeshPhysicalMaterial({ map: t.map, normalMap: t.normal, roughness: .3, clearcoat: .5, clearcoatRoughness: .2, sheen: .6, sheenColor: new THREE.Color(0xffffff) })); s.position.y = lvl; g.add(s);
+  const s = new THREE.Mesh(sg, PM({ map: t.map, normalMap: t.normal, roughness: .3, clearcoat: .5, clearcoatRoughness: .2, sheen: .6, sheenColor: new THREE.Color(0xffffff) })); s.position.y = lvl; g.add(s);
   scatter(g, 14, mintLeaf, (o, r) => { const rr = sr * Math.sqrt(r()) * .7, th = r() * 7; o.position.set(Math.cos(th) * rr, lvl + .02, Math.sin(th) * rr); o.rotation.set(-Math.PI / 2 + (r() - .5) * .4, 0, r() * 7); o.scale.setScalar(.7); }, r);
   const items = [];
   for (let i = 0; i < 3; i++) items.push(onionRing(r));
@@ -389,11 +453,11 @@ export function raitaSalad({ orbit = true } = {}) {
 export function degh() {
   const g = new THREE.Group();
   const pts = [[0, 0], [.5, 0], [.58, .02], [.75, .12], [1.0, .38], [1.15, .68], [1.14, .95], [1.04, 1.15], [.9, 1.28], [.82, 1.35], [.84, 1.42], [.96, 1.48], [.99, 1.52], [.93, 1.55], [.85, 1.5]];
-  g.add(new THREE.Mesh(lathe(pts, 160), mat.copper()));
-  for (const y of [.62, .78]) { const t = new THREE.Mesh(new THREE.TorusGeometry(1.155, .022, 12, 200), mat.darkBrass()); t.rotation.x = Math.PI / 2; t.position.y = y; g.add(t); }
-  const lip = new THREE.Mesh(new THREE.TorusGeometry(.97, .05, 16, 200), mat.brass()); lip.rotation.x = Math.PI / 2; lip.position.y = 1.52; g.add(lip);
-  const seal = new THREE.Mesh(displace(new THREE.TorusGeometry(.9, .13, 32, 200), .035, 7, 3), mat.dough()); seal.rotation.x = Math.PI / 2; seal.position.y = 1.58; g.add(seal);
-  const dome = new THREE.Mesh(displace(new THREE.SphereGeometry(.92, 128, 40, 0, Math.PI * 2, 0, Math.PI / 2), .03, 5, 8), mat.dough());
+  g.add(new THREE.Mesh(lathe(pts, SEG(160)), mat.copper()));
+  for (const y of [.62, .78]) { const t = new THREE.Mesh(new THREE.TorusGeometry(1.155, .022, 12, SEG(200)), mat.darkBrass()); t.rotation.x = Math.PI / 2; t.position.y = y; g.add(t); }
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(.97, .05, 16, SEG(200)), mat.brass()); lip.rotation.x = Math.PI / 2; lip.position.y = 1.52; g.add(lip);
+  const seal = new THREE.Mesh(displace(new THREE.TorusGeometry(.9, .13, 32, SEG(200)), .035, 7, 3), mat.dough()); seal.rotation.x = Math.PI / 2; seal.position.y = 1.58; g.add(seal);
+  const dome = new THREE.Mesh(displace(new THREE.SphereGeometry(.92, SEG(128), 32, 0, Math.PI * 2, 0, Math.PI / 2), .03, 5, 8), mat.dough());
   dome.scale.set(1, .32, 1); dome.position.y = 1.56; g.add(dome);
   for (const s of [-1, 1]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.16, .028, 12, 40), mat.brass()); ring.position.set(s * 1.13, 1.05, 0); ring.rotation.y = Math.PI / 2; g.add(ring); }
   return wrap(g, [new THREE.Vector3(-.35, .72, 0), new THREE.Vector3(.35, .72, .1)], -.95);
@@ -407,6 +471,7 @@ export function spiceCloud() {
     o.userData.orbit = { a, rad, y: (r() - .5) * 2.4, sp: (.03 + r() * .05) * (r() > .5 ? 1 : -1), spin: new THREE.Vector3(r() - .5, r() - .5, r() - .5).multiplyScalar(.7), bob: r() * 6 };
     o.rotation.set(r() * 6, r() * 6, r() * 6); g.add(o); list.push(o);
   });
+  list.forEach((o) => { if (o.children && o.children.length > 1) bake(o); });
   g.userData.orbiters = list; g.userData.steam = [];
   g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return g;

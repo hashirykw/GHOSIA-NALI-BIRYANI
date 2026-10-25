@@ -35,6 +35,9 @@ function makeNoise(seed) {
 }
 
 /* ---------- image helpers ---------- */
+let TS = 1;
+export function setTexScale(k) { TS = k; }
+const sz = (n) => Math.max(128, Math.round(n * TS));
 function field(size, fn) { // returns Float32Array heights
   const H = new Float32Array(size * size);
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) H[y * size + x] = fn(x / size, y / size);
@@ -76,7 +79,7 @@ const once = (k, f) => cache[k] || (cache[k] = f());
 /* ---------- surfaces ---------- */
 // Brushed stainless: lathe UVs run v along the profile, so rows become concentric brushing.
 export const steel = () => once('steel', () => {
-  const S = 512, N = makeNoise(101);
+  const S = sz(512), N = makeNoise(101);
   const H = field(S, (u, v) => 0.7 * N.fbm(u, v, 2, 3, 0.6, 1, 96) + 0.3 * N.fbm(u, v, 8, 4));
   const R = field(S, (u, v) => 0.6 * N.fbm(u, v, 3, 4) + 0.4 * N.fbm(u, v, 1, 2, 0.5, 1, 128));
   return { normal: normalMap(H, S, 0.9), rough: grayMap(R, S, 0.1, 0.32) };
@@ -84,7 +87,7 @@ export const steel = () => once('steel', () => {
 
 // Hammered copper: dimples + patina + polished highlights
 export const copper = () => once('copper', () => {
-  const S = 512, r = rng(7), N = makeNoise(102);
+  const S = sz(512), r = rng(7), N = makeNoise(102);
   const H = new Float32Array(S * S).fill(0.5);
   for (let k = 0; k < 900; k++) {
     const cx = r() * S, cy = r() * S, rad = 6 + r() * 14, dep = 0.25 + r() * 0.3;
@@ -107,7 +110,7 @@ export const copper = () => once('copper', () => {
 });
 
 export const brass = () => once('brass', () => {
-  const c = copper(); const S = 512, N = makeNoise(103);
+  const c = copper(); const S = sz(512), N = makeNoise(103);
   const P = field(S, (u, v) => N.fbm(u, v, 3, 5));
   const map = toTexture(S, (x, y, i) => mixC([214, 168, 78], [150, 104, 40], sstep(0.45, 0.8, P[i])));
   return { map, normal: c.normal, rough: c.rough };
@@ -115,7 +118,7 @@ export const brass = () => once('brass', () => {
 
 // Unglazed terracotta
 export const clay = () => once('clay', () => {
-  const S = 512, N = makeNoise(104), r = rng(9);
+  const S = sz(512), N = makeNoise(104), r = rng(9);
   const H = field(S, (u, v) => 0.75 * N.fbm(u, v, 8, 5) + 0.25 * N.fbm(u, v, 48, 2));
   const C = field(S, (u, v) => N.fbm(u, v, 3, 4));
   const map = toTexture(S, (x, y, i) => {
@@ -129,7 +132,7 @@ export const clay = () => once('clay', () => {
 
 // Slow-cooked beef: stringy fibres + glaze pooling in crevices
 export const meat = () => once('meat', () => {
-  const S = 512, N = makeNoise(105);
+  const S = sz(512), N = makeNoise(105);
   const fib = field(S, (u, v) => {
     const f = N.fbm(u, v, 6, 5, 0.55, 1, 5);          // stretched along v → fibres
     const crev = N.fbm(u, v, 3, 4);
@@ -148,7 +151,7 @@ export const meat = () => once('meat', () => {
 
 // Shank bone: ivory with cooked stains and pores
 export const bone = () => once('bone', () => {
-  const S = 512, N = makeNoise(106), r = rng(11);
+  const S = sz(512), N = makeNoise(106), r = rng(11);
   const H = field(S, (u, v) => 0.6 * N.fbm(u, v, 8, 5, 0.55, 1, 3) + 0.4 * N.fbm(u, v, 32, 3));
   const C = field(S, (u, v) => N.fbm(u, v, 3, 5));
   const pores = new Float32Array(S * S);
@@ -164,7 +167,7 @@ export const bone = () => once('bone', () => {
 });
 
 export const marrow = () => once('marrow', () => {
-  const S = 256, N = makeNoise(107);
+  const S = sz(256), N = makeNoise(107);
   const H = field(S, (u, v) => N.fbm(u, v, 6, 5));
   const map = toTexture(S, (x, y, i) => {
     const dx = x / S - 0.5, dy = y / S - 0.5, d = Math.hypot(dx, dy) * 2;
@@ -177,7 +180,7 @@ export const marrow = () => once('marrow', () => {
 
 // Dough seal: baked, blistered, charred spots
 export const dough = () => once('dough', () => {
-  const S = 512, N = makeNoise(108), r = rng(13);
+  const S = sz(512), N = makeNoise(108), r = rng(13);
   const H = field(S, (u, v) => 0.6 * N.fbm(u, v, 6, 5) + 0.4 * N.fbm(u, v, 24, 3));
   const blist = new Float32Array(S * S);
   for (let k = 0; k < 160; k++) {
@@ -200,14 +203,14 @@ export const dough = () => once('dough', () => {
 
 // Milk-pudding skin
 export const kheer = () => once('kheer', () => {
-  const S = 512, N = makeNoise(109);
+  const S = sz(512), N = makeNoise(109);
   const H = field(S, (u, v) => 0.7 * N.fbm(u, v, 5, 5) + 0.3 * N.fbm(u, v, 20, 3));
   const map = toTexture(S, (x, y, i) => mixC([246, 234, 206], [224, 196, 148], sstep(0.45, 0.85, H[i])));
   return { map, normal: normalMap(H, S, 2.5) };
 });
 
 export const raita = () => once('raita', () => {
-  const S = 512, N = makeNoise(110), r = rng(17);
+  const S = sz(512), N = makeNoise(110), r = rng(17);
   const H = field(S, (u, v) => N.fbm(u, v, 6, 5));
   const map = toTexture(S, (x, y, i) => {
     let c = mixC([246, 244, 234], [226, 222, 204], sstep(0.4, 0.8, H[i]));
@@ -222,7 +225,7 @@ export const raita = () => once('raita', () => {
 
 // Leaf (alpha-cut, veined). kind: 'mint' | 'bay'
 export const leaf = (kind = 'mint') => once('leaf' + kind, () => {
-  const W = 256, N = makeNoise(kind === 'mint' ? 111 : 112);
+  const W = sz(256), N = makeNoise(kind === 'mint' ? 111 : 112);
   const base = kind === 'mint' ? [[44, 98, 36], [86, 150, 60]] : [[96, 98, 48], [146, 140, 82]];
   const H = new Float32Array(W * W), A = new Float32Array(W * W);
   for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
@@ -247,7 +250,7 @@ export const leaf = (kind = 'mint') => once('leaf' + kind, () => {
 
 // Generic organic bump for spices; kind tweaks frequency/stretch
 export const organic = (kind) => once('org' + kind, () => {
-  const S = 256, N = makeNoise(120 + kind.length);
+  const S = sz(256), N = makeNoise(120 + kind.length);
   const cfg = { anise: [10, 1, 3], bark: [6, 1, 14], cardamom: [4, 1, 10], pepper: [14, 1, 1], chili: [6, 1, 6], rind: [40, 1, 1], clove: [12, 1, 2] }[kind] || [8, 1, 1];
   const H = field(S, (u, v) => N.fbm(u, v, cfg[0], 5, 0.55, cfg[1], cfg[2]));
   return { normal: normalMap(H, S, kind === 'rind' ? 3 : 7), rough: grayMap(H, S, 0.45, 0.85), H, S };
@@ -276,7 +279,7 @@ export const smoke = () => once('smoke', () => {
 
 // Citrus flesh (lemon) + slices
 export const citrus = () => once('citrus', () => {
-  const S = 256, N = makeNoise(130);
+  const S = sz(256), N = makeNoise(130);
   return toTexture(S, (x, y) => {
     const dx = x / S - 0.5, dy = y / S - 0.5, d = Math.hypot(dx, dy) * 2, a = Math.atan2(dy, dx);
     if (d > 0.97) return [240, 204, 52];
@@ -289,7 +292,7 @@ export const citrus = () => once('citrus', () => {
   }, { repeat: [1, 1] });
 });
 export const cucumber = () => once('cuc', () => {
-  const S = 256, N = makeNoise(131);
+  const S = sz(256), N = makeNoise(131);
   return toTexture(S, (x, y) => {
     const dx = x / S - 0.5, dy = y / S - 0.5, d = Math.hypot(dx, dy) * 2, a = Math.atan2(dy, dx);
     if (d > 0.95) return [38, 74, 26];
@@ -302,7 +305,7 @@ export const cucumber = () => once('cuc', () => {
   }, { repeat: [1, 1] });
 });
 export const tomato = () => once('tom', () => {
-  const S = 256, N = makeNoise(132);
+  const S = sz(256), N = makeNoise(132);
   return toTexture(S, (x, y) => {
     const dx = x / S - 0.5, dy = y / S - 0.5, d = Math.hypot(dx, dy) * 2, a = Math.atan2(dy, dx);
     if (d > 0.95) return [168, 26, 18];

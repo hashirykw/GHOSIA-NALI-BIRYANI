@@ -7,20 +7,64 @@
   const WA = '923002106954';
   const fmt = (n) => 'Rs. ' + n.toLocaleString('en-PK');
 
-  /* ---------- smooth scroll (Lenis) ---------- */
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const QA = /[?&]qa\b/.test(location.search);
+
+  /* ---------- one master ticker: scroll → UI → 3D, all in the same frame ---------- */
+  const GH = (window.GH = window.GH || {});
+  GH.tickers = GH.tickers || [];
   let lenis = null;
   if (window.Lenis && !reduceMotion) {
-    lenis = new window.Lenis({ lerp: 0.085, wheelMultiplier: 0.9, smoothWheel: true, syncTouch: false });
-    const raf = (time) => { lenis.raf(time); requestAnimationFrame(raf); };
-    requestAnimationFrame(raf);
+    lenis = new window.Lenis({ lerp: 0.09, wheelMultiplier: 0.95, smoothWheel: true, syncTouch: true, syncTouchLerp: 0.085, touchInertiaMultiplier: 28 });
     window.__lenis = lenis;
   }
+  function tick(now) {
+    if (lenis) lenis.raf(now);
+    ui(now);
+    for (let i = 0; i < GH.tickers.length; i++) GH.tickers[i](now);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
   const goTo = (target) => { if (lenis) lenis.scrollTo(target, { duration: 1.6, easing: (x) => 1 - Math.pow(1 - x, 4) }); else if (typeof target === 'number') scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' }); else target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' }); };
   $$('a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => {
     const id = a.getAttribute('href'); const el = id.length > 1 ? document.querySelector(id) : document.body;
     if (!el) return; e.preventDefault(); goTo(id === '#top' ? 0 : el);
   }));
+
+  /* ---------- preloader ---------- */
+  const pre = $('[data-preloader]'), preNum = $('[data-pre-num]'), preRing = $('[data-pre-ring]'), preMsg = $('[data-pre-msg]');
+  const MSGS = ['Lighting the fire', 'Slow-cooking the shank', 'Layering the basmati', 'Sealing the dum', 'Plating the nalli'];
+  let target = 0, shown = 0, sceneDone = false, fontsDone = false, revealed = false;
+  const t0 = performance.now();
+  const sceneW = 0.85;
+  let sceneP = 0;
+  GH.progress = (v) => { sceneP = Math.max(sceneP, v); target = (fontsDone ? 0.15 : 0) + sceneW * sceneP; };
+  GH.done = () => { sceneDone = true; GH.progress(1); };
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { fontsDone = true; GH.progress(sceneP); });
+  if (lenis && pre) lenis.stop();
+  function reveal() {
+    if (revealed) return; revealed = true;
+    document.documentElement.classList.remove('is-loading');
+    document.documentElement.classList.add('is-loaded');
+    if (lenis) lenis.start();
+    if (pre) setTimeout(() => pre.remove(), 1600);
+    setTimeout(() => document.documentElement.classList.add('intro-done'), 2600);
+  }
+  function preTick(now) {
+    if (revealed || !pre) return;
+    shown += (target - shown) * 0.12;
+    if (target - shown < 0.002) shown = target;
+    const pct = Math.round(shown * 100);
+    if (preNum) preNum.textContent = String(pct).padStart(2, '0');
+    if (preRing) preRing.style.strokeDashoffset = String(1 - shown);
+    if (preMsg) preMsg.textContent = MSGS[Math.min(MSGS.length - 1, Math.floor(shown * MSGS.length))];
+    const minTime = now - t0 > 1100;
+    if (shown >= 0.999 && sceneDone && fontsDone && minTime) reveal();
+  }
+  // safety nets: never trap the visitor behind the loader
+  setTimeout(() => { sceneDone = true; fontsDone = true; target = 1; }, QA ? 60000 : 12000);
+  if (!pre) reveal();
 
   /* ---------- nav ---------- */
   const nav = $('#nav');
@@ -49,51 +93,50 @@
     goTo(top + 2);
   }));
 
-  /* ---------- story reveal ---------- */
-  const reveal = $('[data-reveal]'); const units = [];
-  if (reveal) {
-    const nodes = Array.from(reveal.childNodes); reveal.textContent = '';
+  /* ---------- story reveal (only touches the words that change) ---------- */
+  const reveal_ = $('[data-reveal]'); const units = [];
+  if (reveal_) {
+    const nodes = Array.from(reveal_.childNodes); reveal_.textContent = '';
     nodes.forEach((n) => {
       if (n.nodeType === 3) {
         n.textContent.split(/(\s+)/).forEach((part) => {
           if (!part) return;
-          if (/^\s+$/.test(part)) { reveal.appendChild(document.createTextNode(' ')); return; }
-          const s = document.createElement('span'); s.className = 'w'; s.textContent = part; reveal.appendChild(s); units.push(s);
+          if (/^\s+$/.test(part)) { reveal_.appendChild(document.createTextNode(' ')); return; }
+          const s = document.createElement('span'); s.className = 'w'; s.textContent = part; reveal_.appendChild(s); units.push(s);
         });
-      } else { reveal.appendChild(n); if (n.classList && n.classList.contains('chip')) units.push(n); }
+      } else { reveal_.appendChild(n); if (n.classList && n.classList.contains('chip')) units.push(n); }
     });
   }
+  let lit = 0;
   function updateReveal() {
-    if (!reveal) return;
-    const r = reveal.getBoundingClientRect(), vh = innerHeight;
-    const p = clamp((vh * 0.82 - r.top) / (r.height + vh * 0.3));
-    const lit = Math.round(p * units.length);
-    for (let i = 0; i < units.length; i++) units[i].classList.toggle('on', i < lit);
+    if (!reveal_) return;
+    const r = reveal_.getBoundingClientRect(), vh = innerHeight;
+    if (r.bottom < -vh || r.top > vh * 2) return;
+    const want = Math.round(clamp((vh * 0.82 - r.top) / (r.height + vh * 0.3)) * units.length);
+    if (want === lit) return;
+    const [a, b, on] = want > lit ? [lit, want, true] : [want, lit, false];
+    for (let i = a; i < b; i++) units[i].classList.toggle('on', on);
+    lit = want;
   }
 
-  /* ---------- scroll loop ---------- */
-  let ticking = false;
-  function onScroll() {
-    if (ticking) return; ticking = true;
-    requestAnimationFrame(() => {
-      ticking = false;
-      nav.classList.toggle('is-solid', scrollY > 40);
-      if (!window.__theatre) setActive(Math.round(clamp(rawProgress(), 0, N - 1)));
+  /* ---------- per-frame UI (driven by the master ticker) ---------- */
+  let lastY = -1, solid = false, lastBar = -1;
+  function ui(now) {
+    preTick(now);
+    const y = window.scrollY;
+    if (y !== lastY) {
+      lastY = y;
+      const s = y > 40; if (s !== solid) { solid = s; nav.classList.toggle('is-solid', s); }
       updateReveal();
-    });
-  }
-  addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', onScroll);
-  onScroll();
-  // keep the progress bar in step with the eased 3D progress
-  (function sync() {
+      if (!window.__theatre) setActive(Math.round(clamp(rawProgress(), 0, N - 1)));
+    }
     if (window.__theatre) {
       const p = window.__theatre.progress;
       setActive(Math.round(clamp(p, 0, N - 1)));
-      if (bar) bar.style.transform = `scaleX(${(p / (N - 1)).toFixed(4)})`;
+      const b = Math.round((p / (N - 1)) * 1000) / 1000;
+      if (bar && b !== lastBar) { lastBar = b; bar.style.transform = 'scaleX(' + b + ')'; }
     }
-    requestAnimationFrame(sync);
-  })();
+  }
 
   /* ---------- live hours (Asia/Karachi) ---------- */
   const status = $('[data-status]'), statusText = $('[data-status-text]');
