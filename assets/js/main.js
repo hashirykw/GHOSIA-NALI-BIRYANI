@@ -7,11 +7,32 @@
   const WA = '923002106954';
   const fmt = (n) => 'Rs. ' + n.toLocaleString('en-PK');
 
+  /* ---------- smooth scroll (Lenis) ---------- */
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let lenis = null;
+  if (window.Lenis && !reduceMotion) {
+    lenis = new window.Lenis({ lerp: 0.085, wheelMultiplier: 0.9, smoothWheel: true, syncTouch: false });
+    const raf = (time) => { lenis.raf(time); requestAnimationFrame(raf); };
+    requestAnimationFrame(raf);
+    window.__lenis = lenis;
+  }
+  const goTo = (target) => { if (lenis) lenis.scrollTo(target, { duration: 1.6, easing: (x) => 1 - Math.pow(1 - x, 4) }); else if (typeof target === 'number') scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' }); else target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' }); };
+  $$('a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => {
+    const id = a.getAttribute('href'); const el = id.length > 1 ? document.querySelector(id) : document.body;
+    if (!el) return; e.preventDefault(); goTo(id === '#top' ? 0 : el);
+  }));
+
   /* ---------- nav ---------- */
   const nav = $('#nav');
   /* ---------- theatre ---------- */
   const theatre = $('#theatre');
   const slides = $$('.slide'), words = $$('.word'), idxBtns = $$('.dish-index button'), bar = $('[data-bar]');
+  words.forEach((w) => {
+    const txt = w.textContent; w.textContent = '';
+    [...txt].forEach((ch, i) => { const s = document.createElement('span'); s.className = 'ch'; s.style.setProperty('--i', i); s.textContent = ch; w.appendChild(s); });
+    w.classList.add('is-split');
+  });
+  slides.forEach((sl) => Array.from(sl.children).forEach((c, i) => c.style.setProperty('--d', i)));
   const N = slides.length; let active = 0;
   function setActive(i) {
     if (i === active) return; active = i;
@@ -25,7 +46,7 @@
   }
   idxBtns.forEach((b) => b.addEventListener('click', () => {
     const i = +b.dataset.go; const top = theatre.offsetTop + (i / (N - 1)) * (theatre.offsetHeight - innerHeight);
-    scrollTo({ top: top + 2, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    goTo(top + 2);
   }));
 
   /* ---------- story reveal ---------- */
@@ -57,10 +78,7 @@
     requestAnimationFrame(() => {
       ticking = false;
       nav.classList.toggle('is-solid', scrollY > 40);
-      const p = (window.__theatre ? window.__theatre.progress : rawProgress());
-      const raw = rawProgress();
-      setActive(Math.round(clamp(raw, 0, N - 1)));
-      if (bar) bar.style.transform = `scaleX(${(p / (N - 1)).toFixed(4)})`;
+      if (!window.__theatre) setActive(Math.round(clamp(rawProgress(), 0, N - 1)));
       updateReveal();
     });
   }
@@ -68,7 +86,14 @@
   addEventListener('resize', onScroll);
   onScroll();
   // keep the progress bar in step with the eased 3D progress
-  (function barLoop() { if (window.__theatre && bar) { const p = window.__theatre.progress; bar.style.transform = `scaleX(${(p / (N - 1)).toFixed(4)})`; } requestAnimationFrame(barLoop); })();
+  (function sync() {
+    if (window.__theatre) {
+      const p = window.__theatre.progress;
+      setActive(Math.round(clamp(p, 0, N - 1)));
+      if (bar) bar.style.transform = `scaleX(${(p / (N - 1)).toFixed(4)})`;
+    }
+    requestAnimationFrame(sync);
+  })();
 
   /* ---------- live hours (Asia/Karachi) ---------- */
   const status = $('[data-status]'), statusText = $('[data-status-text]');
