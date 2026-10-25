@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ghousia Nalli Biryani · Karachi's Original Beef Nalli Biryani</title>
+<meta name="description" content="Karachi's original beef nalli biryani from Liaquatabad. Order beef nalli biryani, beef pulao, extra nalli, zarda, kheer and raita for delivery across Karachi in around 90 minutes.">
+<link rel="canonical" href="https://ghousianallibiryani.com/">
+<meta name="theme-color" content="#0d0a08">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ghousia Nalli Biryani · Karachi">
+<meta property="og:description" content="Bone-in beef shank, slow-cooked until the marrow melts. Delivered fresh and hot across Karachi.">
+<meta property="og:url" content="https://ghousianallibiryani.com/">
+<meta property="og:image" content="https://ghousianallibiryani.com/assets/img/dish-biryani.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/logo.png">
+<link rel="preload" href="assets/img/logo.webp" as="image">
+
+<link rel="preload" href="assets/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/fraunces-latin-full-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="modulepreload" href="assets/js/vendor/three.module.min.js">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script type="importmap">{ "imports": { "three": "./assets/js/vendor/three.module.min.js" } }</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "name": "Ghousia Nalli Biryani",
+  "url": "https://ghousianallibiryani.com/",
+  "image": "https://ghousianallibiryani.com/assets/img/dish-biryani.webp",
+  "logo": "https://ghousianallibiryani.com/assets/img/logo.png",
+  "servesCuisine": ["Pakistani", "Biryani"],
+  "priceRange": "Rs. 60 – Rs. 1,200",
+  "telephone": "+92-300-2106954",
+  "email": "info@ghousianallibiryani.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "2/240, Liaqatabad Commercial Area, Main Sarafa Bazar, Block 6",
+    "addressLocality": "Liaquatabad Town, Karachi",
+    "addressRegion": "Sindh",
+    "addressCountry": "PK"
+  },
+  "hasMap": "https://maps.app.goo.gl/yH9svoRiyBr4LYwq6",
+  "openingHoursSpecification": [{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    "opens": "11:00", "closes": "23:00"
+  }],
+  "hasMenu": {
+    "@type": "Menu",
+    "hasMenuSection": [
+      { "@type": "MenuSection", "name": "Beef Biryani & Beef Pulao", "hasMenuItem": [
+        { "@type": "MenuItem", "name": "Beef Nalli Biryani · 1 KG", "offers": { "@type": "Offer", "price": "1200", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Beef Nalli Biryani · 3 Paou", "offers": { "@type": "Offer", "price": "900", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Beef Nalli Biryani · 0.5 KG", "offers": { "@type": "Offer", "price": "600", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Beef Nalli Biryani · 1.5 Paou", "offers": { "@type": "Offer", "price": "450", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Beef Nalli Biryani · 1 Paou", "offers": { "@type": "Offer", "price": "300", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Beef Pulao · 1 KG", "offers": { "@type": "Offer", "price": "1200", "priceCurrency": "PKR" } }
+      ]},
+      { "@type": "MenuSection", "name": "Desserts & Extras", "hasMenuItem": [
+        { "@type": "MenuItem", "name": "Per-Piece Nalli", "offers": { "@type": "Offer", "price": "300", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Kheer Box", "offers": { "@type": "Offer", "price": "200", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Zarda (200g)", "offers": { "@type": "Offer", "price": "200", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Raita", "offers": { "@type": "Offer", "price": "60", "priceCurrency": "PKR" } },
+        { "@type": "MenuItem", "name": "Salad", "offers": { "@type": "Offer", "price": "70", "priceCurrency": "PKR" } }
+      ]}
+    ]
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <a class="brand" href="#top" aria-label="Ghousia Nalli Biryani, home">
+    <img class="brand-mark" src="assets/img/logo.webp" alt="" width="256" height="256" decoding="async" fetchpriority="high">
+    <span class="brand-text"><b>Ghousia</b><small>Nalli Biryani</small></span>
+  </a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="#theatre">Dishes</a>
+    <a href="#story">Craft</a>
+    <a href="#menu">Menu</a>
+    <a href="#visit">Visit</a>
+  </nav>
+  <div class="nav-cta">
+    <span class="status" data-status><i></i><span data-status-text>Mon–Sat · 11 AM–11 PM</span></span>
+    <a class="btn btn-ghost" href="tel:+923002106954">Call</a>
+    <a class="btn btn-gold" href="#menu">Order now</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ DISH THEATRE ============ -->
+<section class="theatre" id="theatre" aria-label="Our dishes">
+  <div class="stage">
+    <div class="stage-glow" aria-hidden="true"></div>
+    <div class="stage-dish" data-anchor="hero" aria-hidden="true"></div>
+
+    <svg class="badge" viewBox="0 0 120 120" aria-hidden="true">
+      <defs><path id="circ" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs>
+      <text><textPath href="#circ">FRESH &amp; HOT · ALL OVER KARACHI · LIAQUATABAD ·</textPath></text>
+      <path d="M48 66c0-7 5.5-11 12-11s12 4 12 11H48Z" fill="currentColor"/><path d="M46 66h28v2a3 3 0 0 1-3 3H49a3 3 0 0 1-3-3v-2Z" fill="currentColor" opacity=".6"/>
+    </svg>
+
+    <div class="slides">
+      <article class="slide is-active" data-i="0">
+        <p class="slide-num"><span>01</span><small>/06</small></p>
+        <p class="kicker">The signature · Beef</p>
+        <h1 class="slide-name">Beef Nalli <em>Biryani</em></h1>
+        <p class="slide-desc">Bone-in beef shank, cooked low and slow until the marrow melts into the masala, then layered under basmati and sealed on dum.</p>
+        <div class="slide-price"><b>Rs. 1,200</b><span>per kg · from Rs. 300</span><button class="add" data-add="biryani" data-portion="1kg" type="button">Add 1 kg <span aria-hidden="true">+</span></button></div>
+      </article>
+      <article class="slide" data-i="1">
+        <p class="slide-num"><span>02</span><small>/06</small></p>
+        <p class="kicker">Same shank · Pulao style</p>
+        <h2 class="slide-name">Beef <em>Pulao</em></h2>
+        <p class="slide-desc">Long-grain rice cooked through with beef stock and whole spices, served with the same slow-cooked shank.</p>
+        <div class="slide-price"><b>Rs. 1,200</b><span>per kg · from Rs. 300</span><button class="add" data-add="pulao" data-portion="1kg" type="button">Add 1 kg <span aria-hidden="true">+</span></button></div>
+      </article>
+      <article class="slide" data-i="2">
+        <p class="slide-num"><span>03</span><small>/06</small></p>
+        <p class="kicker">Extra · For marrow lovers</p>
+        <h2 class="slide-name">Per-Piece <em>Nalli</em></h2>
+        <p class="slide-desc">One more marrow bone, sold on its own. Tap it on the plate and let the marrow slide onto your rice.</p>
+        <div class="slide-price"><b>Rs. 300</b><span>per piece</span><button class="add" data-add="nalli" type="button">Add <span aria-hidden="true">+</span></button></div>
+      </article>
+      <article class="slide" data-i="3">
+        <p class="slide-num"><span>04</span><small>/06</small></p>
+        <p class="kicker">Dessert · 200 g</p>
+        <h2 class="slide-name">Saffron <em>Zarda</em></h2>
+        <p class="slide-desc">Sweet saffron rice to close the meal.</p>
+        <div class="slide-price"><b>Rs. 200</b><span>200 g box</span><button class="add" data-add="zarda" type="button">Add <span aria-hidden="true">+</span></button></div>
+      </article>
+      <article class="slide" data-i="4">
+        <p class="slide-num"><span>05</span><small>/06</small></p>
+        <p class="kicker">Dessert · Served chilled</p>
+        <h2 class="slide-name">Kheer <em>Box</em></h2>
+        <p class="slide-desc">Creamy, traditional rice pudding, served chilled.</p>
+        <div class="slide-price"><b>Rs. 200</b><span>per box</span><button class="add" data-add="kheer" type="button">Add <span aria-hidden="true">+</span></button></div>
+      </article>
+      <article class="slide" data-i="5">
+        <p class="slide-num"><span>06</span><small>/06</small></p>
+        <p class="kicker">Sides · Cool &amp; fresh</p>
+        <h2 class="slide-name">Raita &amp; <em>Salad</em></h2>
+        <p class="slide-desc">Cool, tangy yogurt raita and a fresh-cut salad. The cooling side every plate of nalli needs.</p>
+        <div class="slide-price"><b>Rs. 60</b><span>raita · salad Rs. 70</span><button class="add" data-add="raita" type="button">Add raita <span aria-hidden="true">+</span></button></div>
+      </article>
+    </div>
+
+    <div class="words" aria-hidden="true">
+      <span class="word is-active">Biryani</span>
+      <span class="word">Pulao</span>
+      <span class="word">Nalli</span>
+      <span class="word">Zarda</span>
+      <span class="word">Kheer</span>
+      <span class="word">Raita</span>
+    </div>
+
+    <ol class="dish-index" aria-label="Jump to a dish">
+      <li><button type="button" data-go="0" class="is-active"><span>01</span>Nalli Biryani</button></li>
+      <li><button type="button" data-go="1"><span>02</span>Beef Pulao</button></li>
+      <li><button type="button" data-go="2"><span>03</span>Per-Piece Nalli</button></li>
+      <li><button type="button" data-go="3"><span>04</span>Zarda</button></li>
+      <li><button type="button" data-go="4"><span>05</span>Kheer Box</button></li>
+      <li><button type="button" data-go="5"><span>06</span>Raita &amp; Salad</button></li>
+    </ol>
+
+    <div class="stage-foot">
+      <span>Scroll to serve the next dish</span>
+      <span class="bar"><i data-bar></i></span>
+      <span class="foot-right">Liaquatabad · Karachi</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STORY ============ -->
+<section class="story" id="story">
+  <div class="wrap">
+    <p class="label">The craft</p>
+    <p class="reveal" data-reveal>
+      Every degh begins with the shank <img class="chip" src="assets/img/dish-nalli.webp" alt="" width="400" height="508" loading="lazy" decoding="async">
+      Bone-in beef goes in low and slow, until the marrow melts into the masala. Basmati
+      <img class="chip" src="assets/img/dish-biryani.webp" alt="" width="630" height="344" loading="lazy" decoding="async"> is layered over it, the lid is sealed, and the whole thing rests on dum. Then it leaves one small kitchen in Liaquatabad
+      <img class="chip" src="assets/img/dish-degh.webp" alt="" width="450" height="396" loading="lazy" decoding="async"> and reaches tables all over Karachi in around ninety minutes.
+    </p>
+  </div>
+</section>
+
+<!-- ============ SPICES ============ -->
+<section class="spices" id="spices" aria-labelledby="spices-h">
+  <div class="spice-visual" data-anchor="spices" aria-hidden="true"></div>
+  <div class="spice-copy">
+    <p class="label">Inside the degh</p>
+    <h2 id="spices-h" class="h2">What a Karachi degh <em>smells like</em></h2>
+    <ul class="spice-list">
+      <li><b>Shahi Jeera</b><span>Black caraway. Smoky, and sharper than everyday cumin.</span></li>
+      <li><b>Black Pepper</b><span>Whole corns, for heat that builds slowly.</span></li>
+      <li><b>Green Cardamom</b><span>Cracked open for a sweet, floral lift.</span></li>
+      <li><b>Cloves</b><span>Warm and deep. A few go a long way.</span></li>
+      <li><b>Cinnamon Bark</b><span>Woody sweetness underneath the chilli.</span></li>
+      <li><b>Bay Leaf</b><span>Tej patta, tucked between the layers.</span></li>
+      <li><b>Dried Red Chilli</b><span>The heat Karachi expects from its biryani.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ MENU ============ -->
+<section class="menu" id="menu" aria-labelledby="menu-h">
+  <div class="wrap">
+    <div class="menu-head">
+      <div>
+        <p class="label">The menu</p>
+        <h2 id="menu-h" class="h2">Order by the paou <em>or by the kilo</em></h2>
+      </div>
+      <p class="menu-note">Pick your portions and send the order straight to our WhatsApp. Delivery 12:30 PM–10 PM, Monday to Saturday. Delivery charges are confirmed on WhatsApp.</p>
+    </div>
+
+    <div class="menu-grid">
+      <article class="card card-lg" data-item="biryani">
+        <div class="card-img"><img src="assets/img/dish-biryani.webp" alt="Beef nalli biryani on a steel plate with a marrow bone" width="630" height="344" loading="lazy" decoding="async"></div>
+        <div class="card-body">
+          <h3>Beef Nalli Biryani</h3>
+          <p>Slow-cooked beef shank under saffron-streaked basmati, sealed on dum.</p>
+          <div class="portions" role="radiogroup" aria-label="Biryani portion">
+            <button type="button" role="radio" aria-checked="false" data-portion="1p">1 Paou<small>Rs. 300</small></button>
+            <button type="button" role="radio" aria-checked="false" data-portion="1.5p">1.5 Paou<small>Rs. 450</small></button>
+            <button type="button" role="radio" aria-checked="false" data-portion="half">0.5 KG<small>Rs. 600</small></button>
+            <button type="button" role="radio" aria-checked="false" data-portion="3p">3 Paou<small>Rs. 900</small></button>
+            <button type="button" role="radio" aria-checked="true" data-portion="1kg">1 KG<small>Rs. 1,200</small></button>
+          </div>
+          <div class="card-foot"><b data-price>Rs. 1,200</b><button class="add" type="button" data-add="biryani">Add to order <span aria-hidden="true">+</span></button></div>
+        </div>
+      </article>
+
+      <article class="card card-lg" data-item="pulao">
+        <div class="card-img"><img src="assets/img/dish-pulao.webp" alt="Beef pulao in a copper handi" width="575" height="341" loading="lazy" decoding="async"></div>
+        <div class="card-body">
+          <h3>Beef Pulao</h3>
+          <p>Rice cooked through with beef stock and whole spices, with the same tender shank.</p>
+          <div class="portions" role="radiogroup" aria-label="Pulao portion">
+            <button type="button" role="radio" aria-checked="false" data-portion="1p">1 Paou<small>Rs. 300</small></button>
+            <button type="button" role="radio" aria-checked="false" data-portion="1.5p">1.5 Paou<small>Rs. 450</small></button>
+            <button type="button" role="radio" aria-checked="false" data-portion="half">0.5 KG<small>Rs. 600</small></button>
+            <button type="button" role="radio" aria-checked="false" data-portion="3p">3 Paou<small>Rs. 900</small></button>
+            <button type="button" role="radio" aria-checked="true" data-portion="1kg">1 KG<small>Rs. 1,200</small></button>
+          </div>
+          <div class="card-foot"><b data-price>Rs. 1,200</b><button class="add" type="button" data-add="pulao">Add to order <span aria-hidden="true">+</span></button></div>
+        </div>
+      </article>
+
+      <article class="card" data-item="nalli">
+        <div class="card-img"><img src="assets/img/dish-nalli.webp" alt="A single beef nalli marrow bone" width="400" height="508" loading="lazy" decoding="async"></div>
+        <div class="card-body"><h3>Per-Piece Nalli</h3><p>Extra nalli, sold separately.</p>
+          <div class="card-foot"><b>Rs. 300</b><button class="add" type="button" data-add="nalli">Add <span aria-hidden="true">+</span></button></div></div>
+      </article>
+      <article class="card" data-item="kheer">
+        <div class="card-img"><img src="assets/img/dish-kheer.webp" alt="Kheer in a clay bowl with pistachio" width="460" height="253" loading="lazy" decoding="async"></div>
+        <div class="card-body"><h3>Kheer Box</h3><p>Creamy traditional rice pudding, served chilled.</p>
+          <div class="card-foot"><b>Rs. 200</b><button class="add" type="button" data-add="kheer">Add <span aria-hidden="true">+</span></button></div></div>
+      </article>
+      <article class="card" data-item="zarda">
+        <div class="card-img"><img src="assets/img/dish-zarda.webp" alt="Zarda sweet saffron rice in a brass bowl" width="464" height="277" loading="lazy" decoding="async"></div>
+        <div class="card-body"><h3>Zarda <small>200 g</small></h3><p>Sweet saffron rice.</p>
+          <div class="card-foot"><b>Rs. 200</b><button class="add" type="button" data-add="zarda">Add <span aria-hidden="true">+</span></button></div></div>
+      </article>
+      <article class="card card-sides" data-item="sides">
+        <div class="card-img"><img src="assets/img/dish-raita.webp" alt="Raita in a steel bowl with salad" width="720" height="336" loading="lazy" decoding="async"></div>
+        <div class="card-body"><h3>Sides</h3>
+          <div class="side-row"><span>Raita<small>Cool, tangy yogurt</small></span><b>Rs. 60</b><button class="add add-sm" type="button" data-add="raita" aria-label="Add raita">+</button></div>
+          <div class="side-row"><span>Salad<small>Fresh cut</small></span><b>Rs. 70</b><button class="add add-sm" type="button" data-add="salad" aria-label="Add salad">+</button></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TABLE / EVENTS ============ -->
+<section class="table" id="table" aria-labelledby="table-h">
+  <div class="table-copy">
+    <p class="label">Dawats &amp; big orders</p>
+    <h2 id="table-h" class="h2 h2-xl">Made for the <em>whole table</em></h2>
+    <p>Family Fridays, office lunches, wedding dawats. Tell us your headcount on WhatsApp and we'll help you work out how many kilos to order.</p>
+    <a class="btn btn-gold btn-lg" href="https://wa.me/923002106954?text=Assalam%20o%20Alaikum!%20I%27d%20like%20to%20place%20a%20bulk%20order%20for%20an%20event." target="_blank" rel="noopener">Plan a bulk order</a>
+  </div>
+  <div class="degh-visual" data-anchor="degh" aria-hidden="true"></div>
+</section>
+
+<!-- ============ VISIT ============ -->
+<section class="visit" id="visit" aria-labelledby="visit-h">
+  <div class="wrap visit-grid">
+    <div class="visit-main">
+      <p class="label">One kitchen · Liaquatabad</p>
+      <h2 id="visit-h" class="address">2/240, Main Sarafa Bazar,<br>Liaqatabad Commercial Area, Block 6,<br>Liaquatabad Town, Karachi</h2>
+      <div class="visit-actions">
+        <a class="btn btn-gold" href="https://maps.app.goo.gl/yH9svoRiyBr4LYwq6" target="_blank" rel="noopener">Get directions</a>
+        <a class="btn btn-ghost" href="https://wa.me/923002106954" target="_blank" rel="noopener">WhatsApp us</a>
+      </div>
+    </div>
+    <dl class="facts">
+      <div><dt>Shop</dt><dd>Mon–Sat · 11:00 AM – 11:00 PM</dd></div>
+      <div><dt>Delivery</dt><dd>Mon–Sat · 12:30 PM – 10:00 PM<br><small>Across Karachi · around 90 minutes</small></dd></div>
+      <div><dt>Sunday</dt><dd>Closed</dd></div>
+      <div><dt>Call</dt><dd><a href="tel:+923002106954">0300 2106954</a><br><a href="tel:+923223667375">0322 3667375</a></dd></div>
+      <div><dt>Email</dt><dd><a href="mailto:info@ghousianallibiryani.com">info@ghousianallibiryani.com</a></dd></div>
+    </dl>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top"><img class="footer-logo" src="assets/img/logo.webp" alt="Ghousia Nalli Biryani logo" width="256" height="256" loading="lazy"><p class="footer-word" aria-hidden="true">Ghousia</p></div>
+    <div class="footer-row">
+      <p>© <span data-year>2026</span> Ghousia Nalli Biryani · Karachi's original beef nalli biryani.</p>
+      <nav aria-label="Footer"><a href="#theatre">Dishes</a><a href="#menu">Menu</a><a href="#table">Bulk orders</a><a href="#visit">Visit</a></nav>
+    </div>
+    <div class="nx-strip">
+      <a class="nx-brand" href="https://nexlyr.solutions" target="_blank" rel="noopener" aria-label="Nexlyr Solutions">
+        <img src="assets/img/nexlyr-logo.svg" alt="Nexlyr Solutions" width="631" height="1011" loading="lazy">
+      </a>
+      <p>Designed &amp; developed by <b>Nexlyr Solutions</b></p>
+      <a class="nx-btn" href="https://nexlyr.solutions" target="_blank" rel="noopener">Connect</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ ORDER TRAY ============ -->
+<div class="tray" data-tray hidden>
+  <button type="button" class="tray-btn" data-open-order>
+    <span class="tray-count" data-count>0</span>
+    <span class="tray-label">Your order</span>
+    <b data-total>Rs. 0</b>
+    <span class="tray-go">Review <span aria-hidden="true">→</span></span>
+  </button>
+</div>
+
+<dialog class="order" data-order aria-labelledby="order-h">
+  <form method="dialog" class="order-inner" data-order-form>
+    <header><h2 id="order-h">Your order</h2><button class="x" value="close" aria-label="Close">×</button></header>
+    <ul class="order-list" data-list></ul>
+    <p class="order-empty" data-empty>Nothing added yet.</p>
+    <div class="order-total"><span>Total</span><b data-total>Rs. 0</b></div>
+    <p class="order-small">Delivery charges confirmed on WhatsApp.</p>
+    <label>Name<input name="name" autocomplete="name" placeholder="Your name"></label>
+    <label>Delivery address<textarea name="address" rows="2" autocomplete="street-address" placeholder="House, street, area"></textarea></label>
+    <div class="order-actions">
+      <button type="button" class="btn btn-ghost" data-clear>Clear</button>
+      <button type="button" class="btn btn-gold btn-lg" data-send>Send on WhatsApp</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="assets/js/main.js" defer></script>
+<script type="module" src="assets/js/scene.js"></script>
+</body>
+</html>
