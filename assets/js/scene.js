@@ -13,7 +13,8 @@ const QA = /[?&]qa\b/.test(location.search);
 
 /* ---------- device tier ---------- */
 const coarse = matchMedia('(pointer: coarse)').matches;
-const LOW = coarse || innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+const forced = new URLSearchParams(location.search).get('tier');
+const LOW = forced ? forced === 'low' : (coarse || innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4);
 const TIER = LOW
   ? { rice: 0.5, shadow: 512, dpr: 1.25, steam: 8, embers: 60 }
   : { rice: 0.85, shadow: 1024, dpr: 1.5, steam: 14, embers: 120 };
